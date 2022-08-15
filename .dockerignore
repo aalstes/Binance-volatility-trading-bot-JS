@@ -1,0 +1,8 @@
+src
+test
+coverage
+__mocks__
+.git
+.idea
+.vscode
+npm-debug.log
