@@ -6,7 +6,7 @@
 
 - yarn lock file, instead of npm.
 
-- Added Dockerfile.
+- Added Dockerfile. https://hub.docker.com/repository/docker/alsteant/binance-bot
 
 # README from forked repo starts here
 
