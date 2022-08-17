@@ -1,12 +1,19 @@
 # Binance-volatility-trading-bot-JS
 
-# Changes in this fork
+## Changes in this fork
 
 - TEST_MODE is an environment variable now.
 
 - yarn lock file, instead of npm.
 
 - Added Dockerfile. https://hub.docker.com/repository/docker/alsteant/binance-bot
+
+## Notes
+
+- Use this bot at your own risk.
+
+- Save the planet. Refrain from doing on-chain transactions with proof-of-work
+  coins, such as Bitcoin.
 
 # README from forked repo starts here
 
