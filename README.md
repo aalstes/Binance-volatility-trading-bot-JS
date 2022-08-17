@@ -8,7 +8,7 @@
 
 - Added Dockerfile.
 
-# Intro from forked repo
+# README from forked repo starts here
 
 I take the idea from <a href="https://github.com/CyberPunkMetalHead/Binance-volatility-trading-bot"> this project</a>. The original bot is written in Python. I quite like it so I re-write it in Java Script to fix some issues and add some improvements. Shoutout to <a href="https://github.com/CyberPunkMetalHead"> CyberPunkMetalHead</a> for such an awesome contribution
 
