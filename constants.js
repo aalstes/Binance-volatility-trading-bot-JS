@@ -1,23 +1,23 @@
-const MARKET_FLAG = { type: 'MARKET' };
+const MARKET_FLAG = { type: "MARKET" };
 
 /* List of pairs to exclude
   by default we're excluding the most popular fiat pairs
   and some margin keywords, as we're only working on the SPOT account
 */
-const FIATS = ['EURUSDT', 'GBPUSDT', 'JPYUSDT', 'USDUSDT', 'DOWN', 'UP'];
+const FIATS = ["EURUSDT", "GBPUSDT", "JPYUSDT", "USDUSDT", "DOWN", "UP"];
 const TESTNET_URLS = {
-  base: 'https://testnet.binance.vision/api/',
-  combineStream: 'wss://testnet.binance.vision/stream?streams=',
-  stream: 'wss://testnet.binance.vision/ws/',
+  base: "https://testnet.binance.vision/api/",
+  combineStream: "wss://testnet.binance.vision/stream?streams=",
+  stream: "wss://testnet.binance.vision/ws/",
 };
 const MAINNET_URLS = {
-  base: 'https://api.binance.com/api/',
-  combineStream: 'wss://stream.binance.com:9443/stream?streams=',
-  stream: 'wss://stream.binance.com:9443/ws/',
+  base: "https://api.binance.com/api/",
+  combineStream: "wss://stream.binance.com:9443/stream?streams=",
+  stream: "wss://stream.binance.com:9443/ws/",
 };
 
 // Set TEST_MODE = false to switch to the mainnet to trade with REAL money
-const TEST_MODE = true;
+const TEST_MODE = process.env.TEST_MODE !== "false";
 
 /* 
  Every time an asset hits the TP, the bot doesn't sell it immediately. 
@@ -41,4 +41,12 @@ const TRAILING_MODE = true;
 */
 const SAFE_MODE = true;
 
-module.exports = { MARKET_FLAG, FIATS, TESTNET_URLS, MAINNET_URLS, TEST_MODE, TRAILING_MODE, SAFE_MODE };
+module.exports = {
+  MARKET_FLAG,
+  FIATS,
+  TESTNET_URLS,
+  MAINNET_URLS,
+  TEST_MODE,
+  TRAILING_MODE,
+  SAFE_MODE,
+};
