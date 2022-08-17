@@ -2,7 +2,7 @@
 
 ## Changes in this fork
 
-- TEST_MODE is an environment variable now.
+- TEST_MODE, TRAILING_MODE are environment variables now.
 
 - yarn lock file, instead of npm.
 

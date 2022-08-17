@@ -30,7 +30,7 @@ const TEST_MODE = process.env.TEST_MODE !== "false";
 
 Disable this feature by setting "TRAILING_MODE" below to false
 */
-const TRAILING_MODE = true;
+const TRAILING_MODE = process.env.TRAILING_MODE !== "false";
 
 /* 
   SAFE MODE description: To avoid the rapid ups and immediate downs within the next interval,
