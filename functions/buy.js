@@ -77,7 +77,8 @@ const calculateBuyingQuantity = async (symbol, length, portfolio) => {
 };
 
 const toCcxtSymbol = (symbol) => {
-  return symbol.replace("USDT", "/USDT"); // TODO: make this more robust
+  const quoteCurrency = process.env.PAIR_WITH;
+  return symbol.replace(quoteCurrency, `/${quoteCurrency}`);
 };
 
 const handleBuy = async (volatiles) => {
@@ -121,20 +122,21 @@ const handleBuy = async (volatiles) => {
           ),
           stopPrice: ccxtBinance.priceToPrecision(
             ccxtSymbol,
-            orderData.SL_Threshold
+            orderData.SL_Threshold * 1.01 // to ensure it executes
           ),
           stopLimitPrice: ccxtBinance.priceToPrecision(
             ccxtSymbol,
-            orderData.SL_Threshold * 1.01
-          ), // to ensure it executes
+            orderData.SL_Threshold
+          ),
           stopLimitTimeInForce: "GTC",
         };
+        // it’s recommended that the stop price for sell orders should be slightly higher than the limit price
+        // https://www.binance.com/en/support/faq/115003372072
         console.log("params", params);
 
         const oco_orders = await ccxtBinance.private_post_order_oco(params);
-        console.log("oco_orders", oco_orders);
         const orders = oco_orders.orderReports.map((item) =>
-          exchange.parseOrder(item)
+          ccxtBinance.parseOrder(item)
         );
         const stopOrder = orders.find(
           (item) => item.info.type === "STOP_LOSS_LIMIT"
@@ -143,12 +145,18 @@ const handleBuy = async (volatiles) => {
           (item) => item.info.type === "LIMIT_MAKER"
         );
 
+        console.log("limitOrder price", limitOrder.price);
+        console.log("stopOrder price", stopOrder.price);
+        console.log("stopOrder stop price", stopOrder.stopPrice);
+
         orderData.SL_Order = stopOrder.orderId;
         orderData.TP_Order = limitOrder.orderId;
 
+        console.log("orderData", orderData);
+
         portfolio.push(orderData);
         console.log(
-          `${returnTimeLog()} Successfully place an order: ${JSON.stringify(
+          `${returnTimeLog()} Successfully placed an order: ${JSON.stringify(
             orderData
           )}`
         );
@@ -159,7 +167,6 @@ const handleBuy = async (volatiles) => {
             error.body || JSON.stringify(error)
           }`
         );
-        console.trace();
       }
     }
   } else {

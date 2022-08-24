@@ -22,6 +22,8 @@ if (!TEST_MODE) {
   console.log(
     `${returnTimeLog()} You're using the bot on the mainnet with real money, be cautious and don't start with too much quantity!!`
   );
+} else {
+  ccxtBinance.setSandboxMode(true);
 }
 
 module.exports = { binance, ccxtBinance };
