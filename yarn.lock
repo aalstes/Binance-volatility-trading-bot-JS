@@ -75,6 +75,11 @@ caseless@~0.12.0:
   resolved "https://registry.yarnpkg.com/caseless/-/caseless-0.12.0.tgz#1b681c21ff84033c826543090689420d187151dc"
   integrity sha512-4tYFyifaFfGacoiObjJegolkwSU4xQNGbVgUiNYVUxbQ2x2lUsFvY4hVgVzGiIe6WLOPqycWXA40l+PWsxthUw==
 
+ccxt@^1.92.56:
+  version "1.92.56"
+  resolved "https://registry.yarnpkg.com/ccxt/-/ccxt-1.92.56.tgz#c528d8b42b940ffb7341302075cf6b7655de6783"
+  integrity sha512-PA7nODakOqL4Bjm2L4YJfGKLrqPve5e+ySSyrO2hBP7b2aq52yBr5l4SBcrpBghm1+UE8ytZ9uTwyDTLH3PCYg==
+
 combined-stream@^1.0.6, combined-stream@~1.0.6:
   version "1.0.8"
   resolved "https://registry.yarnpkg.com/combined-stream/-/combined-stream-1.0.8.tgz#c3d45a8b34fd730631a110a8a2520682b31d5a7f"

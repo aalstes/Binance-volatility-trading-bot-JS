@@ -1,15 +1,21 @@
-const { readFile } = require('fs').promises;
-const binance = require('../binance');
-const { MARKET_FLAG } = require('../constants');
+const { binance, ccxtBinance } = require("../binance");
+const { MARKET_FLAG } = require("../constants");
 const {
   returnPercentageOfX,
   returnTimeLog,
   readPortfolio,
   savePortfolio,
   getBinanceConfig,
-} = require('./helpers');
+} = require("./helpers");
 
-const { VOLATILE_TRIGGER, INTERVAL, QUANTITY, MIN_QUANTITY, TP_THRESHOLD, SL_THRESHOLD } = process.env;
+const {
+  VOLATILE_TRIGGER,
+  INTERVAL,
+  QUANTITY,
+  MIN_QUANTITY,
+  TP_THRESHOLD,
+  SL_THRESHOLD,
+} = process.env;
 
 const calculatePortfolioValue = (portfolio) => {
   let value = 0;
@@ -23,10 +29,16 @@ const calculatePortfolioValue = (portfolio) => {
 
 const buy = async (coin, quantity) => {
   try {
-    const orderData = await binance.marketBuy(coin, quantity, (flags = MARKET_FLAG));
+    const orderData = await binance.marketBuy(
+      coin,
+      quantity,
+      (flags = MARKET_FLAG)
+    );
     return orderData;
   } catch (error) {
-    throw `Error in executing buy function: ${error.body || JSON.stringify(error)}`;
+    throw `Error in executing buy function: ${
+      error.body || JSON.stringify(error)
+    }`;
   }
 };
 
@@ -64,27 +76,82 @@ const calculateBuyingQuantity = async (symbol, length, portfolio) => {
   }
 };
 
+const toCcxtSymbol = (symbol) => {
+  return symbol.replace("USDT", "/USDT"); // TODO: make this more robust
+};
+
 const handleBuy = async (volatiles) => {
   if (volatiles.length) {
     for (const symbol of volatiles) {
       try {
         const portfolio = await readPortfolio();
-        const quantity = await calculateBuyingQuantity(symbol, volatiles.length, portfolio);
+        const quantity = await calculateBuyingQuantity(
+          symbol,
+          volatiles.length,
+          portfolio
+        );
         const purchaseData = await buy(symbol, quantity);
+        console.log("purchaseData", purchaseData);
         const { price } = purchaseData.fills[0];
+
         const orderData = {
           symbol,
           quantity,
           orderId: purchaseData.orderId,
           bought_at: Number(price),
-          TP_Threshold: Number(price) + returnPercentageOfX(Number(price), TP_THRESHOLD),
-          SL_Threshold: Number(price) - returnPercentageOfX(Number(price), SL_THRESHOLD),
+          TP_Threshold:
+            Number(price) + returnPercentageOfX(Number(price), TP_THRESHOLD),
+          SL_Threshold:
+            Number(price) - returnPercentageOfX(Number(price), SL_THRESHOLD),
           purchase_time: new Date().toLocaleString(),
           purchase_time_unix: new Date().getTime(),
           updated_at: new Date().toLocaleString(),
         };
+
+        const ccxtSymbol = toCcxtSymbol(symbol);
+
+        // From https://github.com/ccxt/ccxt/issues/14595
+        const params = {
+          symbol, // binance.market(symbol)['id'],
+          side: "SELL",
+          quantity: ccxtBinance.amountToPrecision(ccxtSymbol, quantity),
+          price: ccxtBinance.priceToPrecision(
+            ccxtSymbol,
+            orderData.TP_Threshold
+          ),
+          stopPrice: ccxtBinance.priceToPrecision(
+            ccxtSymbol,
+            orderData.SL_Threshold
+          ),
+          stopLimitPrice: ccxtBinance.priceToPrecision(
+            ccxtSymbol,
+            orderData.SL_Threshold * 1.01
+          ), // to ensure it executes
+          stopLimitTimeInForce: "GTC",
+        };
+        console.log("params", params);
+
+        const oco_orders = await ccxtBinance.private_post_order_oco(params);
+        console.log("oco_orders", oco_orders);
+        const orders = oco_orders.orderReports.map((item) =>
+          exchange.parseOrder(item)
+        );
+        const stopOrder = orders.find(
+          (item) => item.info.type === "STOP_LOSS_LIMIT"
+        );
+        const limitOrder = orders.find(
+          (item) => item.info.type === "LIMIT_MAKER"
+        );
+
+        orderData.SL_Order = stopOrder.orderId;
+        orderData.TP_Order = limitOrder.orderId;
+
         portfolio.push(orderData);
-        console.log(`${returnTimeLog()} Successfully place an order: ${JSON.stringify(orderData)}`);
+        console.log(
+          `${returnTimeLog()} Successfully place an order: ${JSON.stringify(
+            orderData
+          )}`
+        );
         await savePortfolio(portfolio);
       } catch (error) {
         console.log(
@@ -92,6 +159,7 @@ const handleBuy = async (volatiles) => {
             error.body || JSON.stringify(error)
           }`
         );
+        console.trace();
       }
     }
   } else {

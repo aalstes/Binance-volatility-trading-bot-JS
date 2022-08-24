@@ -1,32 +1,42 @@
-const binance = require('../binance');
-const { readFile, writeFile } = require('fs').promises;
+const { binance, ccxtBinance } = require("../binance");
+const { readFile, writeFile } = require("fs").promises;
 const {
   returnPercentageOfX,
   returnTimeLog,
   savePortfolio,
   readPortfolio,
   getBinanceConfig,
-} = require('./helpers');
+} = require("./helpers");
 
-const { MARKET_FLAG, TRAILING_MODE, TEST_MODE } = require('../constants');
+const { MARKET_FLAG, TRAILING_MODE, TEST_MODE } = require("../constants");
 const { TP_THRESHOLD, SL_THRESHOLD } = process.env;
 
 const sell = async (exchangeConfig, { symbol, quantity }) => {
   try {
     const { stepSize } = exchangeConfig[symbol];
-    const actualQty = returnPercentageOfX(quantity, process.env.ACTUAL_SELL_RATIO);
+    const actualQty = returnPercentageOfX(
+      quantity,
+      process.env.ACTUAL_SELL_RATIO
+    );
     const roundedQty = await binance.roundStep(actualQty, stepSize);
-    const sellData = await binance.marketSell(symbol, roundedQty, (flags = MARKET_FLAG));
+    const sellData = await binance.marketSell(
+      symbol,
+      roundedQty,
+      (flags = MARKET_FLAG)
+    );
     return sellData;
   } catch (error) {
-    throw `Error in selling ${quantity} of ${symbol}: ${error.body || JSON.stringify(error)}`;
+    throw `Error in selling ${quantity} of ${symbol}: ${
+      error.body || JSON.stringify(error)
+    }`;
   }
 };
 
 const saveSuccessOrder = async (order, coinRecentPrice) => {
   try {
-    const successOrders = JSON.parse(await readFile('sold-assets.json'));
-    const displayProfit = ((coinRecentPrice - order.bought_at) / order.bought_at) * 100;
+    const successOrders = JSON.parse(await readFile("sold-assets.json"));
+    const displayProfit =
+      ((coinRecentPrice - order.bought_at) / order.bought_at) * 100;
 
     const successOrder = {
       ...order,
@@ -35,7 +45,11 @@ const saveSuccessOrder = async (order, coinRecentPrice) => {
       profit: `${displayProfit.toFixed(2)}%`,
     };
     successOrders.push(successOrder);
-    await writeFile('sold-assets.json', JSON.stringify(successOrders, null, 4), { flag: 'w' });
+    await writeFile(
+      "sold-assets.json",
+      JSON.stringify(successOrders, null, 4),
+      { flag: "w" }
+    );
     const { symbol, profit } = successOrder;
     console.log(
       `${returnTimeLog()} The asset ${symbol} has been sold sucessfully at the profit of ${profit} and recorded in sold-assets.json`
@@ -48,7 +62,7 @@ const saveSuccessOrder = async (order, coinRecentPrice) => {
 const handleSellData = async (sellData, coinRecentPrice, order) => {
   try {
     const { symbol, TP_Threshold, SL_Threshold, quantity } = order;
-    if (TEST_MODE ? sellData.status : sellData.status === 'FILLED') {
+    if (TEST_MODE ? sellData.status : sellData.status === "FILLED") {
       if (coinRecentPrice >= TP_Threshold) {
         console.log(`${returnTimeLog()} ${symbol} price has hit TP threshold`);
       } else if (coinRecentPrice <= SL_Threshold) {
@@ -77,8 +91,12 @@ const changeOrderThresholds = async ({ symbol }, coinRecentPrice) => {
         const updatedOrder = {
           ...order,
           updated_at: new Date().toLocaleString(),
-          TP_Threshold: Number(coinRecentPrice) + returnPercentageOfX(Number(coinRecentPrice), TP_THRESHOLD),
-          SL_Threshold: Number(coinRecentPrice) - returnPercentageOfX(Number(coinRecentPrice), SL_THRESHOLD),
+          TP_Threshold:
+            Number(coinRecentPrice) +
+            returnPercentageOfX(Number(coinRecentPrice), TP_THRESHOLD),
+          SL_Threshold:
+            Number(coinRecentPrice) -
+            returnPercentageOfX(Number(coinRecentPrice), SL_THRESHOLD),
         };
         return updatedOrder;
       }
@@ -92,7 +110,11 @@ const changeOrderThresholds = async ({ symbol }, coinRecentPrice) => {
   }
 };
 
-const handlePriceHitThreshold = async (exchangeConfig, order, coinRecentPrice) => {
+const handlePriceHitThreshold = async (
+  exchangeConfig,
+  order,
+  coinRecentPrice
+) => {
   try {
     const { TP_Threshold, SL_Threshold } = order;
 
@@ -104,7 +126,9 @@ const handlePriceHitThreshold = async (exchangeConfig, order, coinRecentPrice) =
       await handleSellData(sellData, coinRecentPrice, order);
     }
   } catch (error) {
-    throw `Error in handling price hitting threshold: ${error.body || JSON.stringify(error)}`;
+    throw `Error in handling price hitting threshold: ${
+      error.body || JSON.stringify(error)
+    }`;
   }
 };
 
@@ -117,7 +141,10 @@ const handleSell = async (lastestPrice) => {
         const { symbol, TP_Threshold, SL_Threshold, quantity } = order;
         const { price: coinRecentPrice } = lastestPrice[symbol];
 
-        if (coinRecentPrice >= TP_Threshold || coinRecentPrice <= SL_Threshold) {
+        if (
+          coinRecentPrice >= TP_Threshold ||
+          coinRecentPrice <= SL_Threshold
+        ) {
           await handlePriceHitThreshold(exchangeConfig, order, coinRecentPrice);
         } else {
           console.log(
@@ -125,11 +152,51 @@ const handleSell = async (lastestPrice) => {
           );
         }
       } catch (error) {
-        console.log(`${returnTimeLog()} Error in excuting sell function: ${JSON.stringify(error)}`);
+        console.log(
+          `${returnTimeLog()} Error in excuting sell function: ${JSON.stringify(
+            error
+          )}`
+        );
       }
     });
   } else {
-    console.log(`${returnTimeLog()} The portfolio is currently empty, wait for the chance to sell...`);
+    console.log(
+      `${returnTimeLog()} The portfolio is currently empty, wait for the chance to sell...`
+    );
+  }
+};
+
+const handleLimitOrderSell = async () => {
+  const orders = await readPortfolio();
+  if (orders.length) {
+    orders.forEach(async (order) => {
+      try {
+        const { symbol, SL_Order, TP_Order } = order;
+        const slOrder = await ccxtBinance.fetchOrder(SL_Order);
+        const tpOrder = await ccxtBinance.fetchOrder(TP_Order);
+        const slFilled = slOrder.status === "closed";
+        const tpFilled = tpOrder.status === "closed";
+
+        if (slFilled || tpFilled) {
+          const price = slFilled ? slOrder.price : tpOrder.price;
+          await handleSellData({ status: "FILLED" }, price, order);
+        } else {
+          console.log(
+            `${returnTimeLog()} ${symbol} price hasn't hit SL or TP threshold, continue to wait...`
+          );
+        }
+      } catch (error) {
+        console.log(
+          `${returnTimeLog()} Error in handleLimitOrderSell function: ${JSON.stringify(
+            error
+          )}`
+        );
+      }
+    });
+  } else {
+    console.log(
+      `${returnTimeLog()} The portfolio is currently empty, wait for the chance to sell...`
+    );
   }
 };
 
@@ -139,8 +206,10 @@ const removeSymbolFromPortfolio = async (symbol) => {
     const updatedOrders = orders.filter((order) => order.symbol !== symbol);
     await savePortfolio(updatedOrders);
   } catch (error) {
-    console.log(`${returnTimeLog()} Error in removing symbol from portfolio: ${error}`);
+    console.log(
+      `${returnTimeLog()} Error in removing symbol from portfolio: ${error}`
+    );
   }
 };
 
-module.exports = { handleSell, sell, handleSellData };
+module.exports = { handleSell, sell, handleSellData, handleLimitOrderSell };

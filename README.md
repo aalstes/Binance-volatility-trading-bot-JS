@@ -8,6 +8,14 @@
 
 - Added Dockerfile. https://hub.docker.com/repository/docker/alsteant/binance-bot
 
+- TP and SL with limit sell orders.
+
+## TODO
+
+- Use ccxt for all API calls.
+
+- Support other exchanges.
+
 ## Notes
 
 - Use this bot at your own risk.
