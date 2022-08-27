@@ -149,8 +149,8 @@ const handleBuy = async (volatiles) => {
         console.log("stopOrder price", stopOrder.price);
         console.log("stopOrder stop price", stopOrder.stopPrice);
 
-        orderData.SL_Order = stopOrder.orderId;
-        orderData.TP_Order = limitOrder.orderId;
+        orderData.SL_Order = stopOrder.id;
+        orderData.TP_Order = limitOrder.id;
 
         console.log("orderData", orderData);
 
