@@ -176,6 +176,8 @@ const handleLimitOrderSell = async () => {
         const tpOrder = await ccxtBinance.fetchOrder(TP_Order);
         const slFilled = slOrder.status === "closed";
         const tpFilled = tpOrder.status === "closed";
+        console.log(`${symbol} TP order status`, tpOrder.status);
+        console.log(`${symbol} SL order status`, slOrder.status);
 
         if (slFilled || tpFilled) {
           const price = slFilled ? slOrder.price : tpOrder.price;
