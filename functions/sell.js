@@ -8,6 +8,7 @@ const {
   getBinanceConfig,
   toCcxtSymbol,
 } = require("./helpers");
+const Sentry = require("@sentry/node");
 
 const { MARKET_FLAG, TRAILING_MODE, TEST_MODE } = require("../constants");
 const { TP_THRESHOLD, SL_THRESHOLD } = process.env;
@@ -27,6 +28,7 @@ const sell = async (exchangeConfig, { symbol, quantity }) => {
     );
     return sellData;
   } catch (error) {
+    Sentry.captureException(error);
     throw `Error in selling ${quantity} of ${symbol}: ${
       error.body || JSON.stringify(error)
     }`;
@@ -56,6 +58,7 @@ const saveSuccessOrder = async (order, coinRecentPrice) => {
       `${returnTimeLog()} The asset ${symbol} has been sold sucessfully at the profit of ${profit} and recorded in sold-assets.json`
     );
   } catch (error) {
+    Sentry.captureException(error);
     throw `Error in saving success order: ${error}`;
   }
 };
@@ -77,6 +80,7 @@ const handleSellData = async (sellData, coinRecentPrice, order) => {
       );
     }
   } catch (error) {
+    Sentry.captureException(error);
     throw `Error in handling sell data ${error.body || JSON.stringify(error)}`;
   }
 };
@@ -107,6 +111,7 @@ const changeOrderThresholds = async ({ symbol }, coinRecentPrice) => {
       `${returnTimeLog()} The ${symbol} has hit TP threshold and we continue to hold as TRAILING MODE activated`
     );
   } catch (error) {
+    Sentry.captureException(error);
     throw `Error in changing order thresholds: ${error}`;
   }
 };
@@ -127,6 +132,7 @@ const handlePriceHitThreshold = async (
       await handleSellData(sellData, coinRecentPrice, order);
     }
   } catch (error) {
+    Sentry.captureException(error);
     throw `Error in handling price hitting threshold: ${
       error.body || JSON.stringify(error)
     }`;
@@ -153,6 +159,7 @@ const handleSell = async (lastestPrice) => {
           );
         }
       } catch (error) {
+        Sentry.captureException(error);
         console.log(
           `${returnTimeLog()} Error in excuting sell function: ${JSON.stringify(
             error
@@ -197,6 +204,7 @@ const handleLimitOrderSell = async () => {
           );
         }
       } catch (error) {
+        Sentry.captureException(error);
         console.log(
           `${returnTimeLog()} Error in handleLimitOrderSell function: ${JSON.stringify(
             error
@@ -220,6 +228,7 @@ const removeSymbolFromPortfolio = async (symbol) => {
     console.log(
       `${returnTimeLog()} Error in removing symbol from portfolio: ${error}`
     );
+    Sentry.captureException(error);
   }
 };
 

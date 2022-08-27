@@ -1,3 +1,4 @@
+const Sentry = require("@sentry/node");
 const { binance, ccxtBinance } = require("../binance");
 const { MARKET_FLAG } = require("../constants");
 const {
@@ -37,6 +38,7 @@ const buy = async (coin, quantity) => {
     );
     return orderData;
   } catch (error) {
+    Sentry.captureException(error);
     throw `Error in executing buy function: ${
       error.body || JSON.stringify(error)
     }`;
@@ -73,6 +75,7 @@ const calculateBuyingQuantity = async (symbol, length, portfolio) => {
     const quantityBasedOnStepSize = await binance.roundStep(quantity, stepSize);
     return quantityBasedOnStepSize;
   } catch (error) {
+    Sentry.captureException(error);
     throw `Error in calculating quantity: ${JSON.stringify(error)}`;
   }
 };
@@ -163,6 +166,7 @@ const handleBuy = async (volatiles) => {
             error.body || JSON.stringify(error)
           }`
         );
+        Sentry.captureException(error);
       }
     }
   } else {

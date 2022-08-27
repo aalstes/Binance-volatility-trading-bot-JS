@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/21jake/Binance-volatility-trading-bot-JS#readme",
   "dependencies": {
+    "@sentry/node": "^7.11.1",
+    "@sentry/tracing": "^7.11.1",
     "ccxt": "^1.92.56",
     "dotenv": "^9.0.1",
     "node-binance-api": "^0.12.5"

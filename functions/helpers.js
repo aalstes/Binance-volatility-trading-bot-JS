@@ -1,4 +1,5 @@
 const { readFile, writeFile } = require("fs").promises;
+const Sentry = require("@sentry/node");
 
 const returnPercentageOfX = (x, percentage) => {
   return (percentage * x) / 100;
@@ -36,6 +37,7 @@ const readPortfolio = async () => {
   try {
     return JSON.parse(await readFile("holding-assets.json"));
   } catch (error) {
+    Sentry.captureException(error);
     throw `Error reading portfolio: ${error}`;
   }
 };
@@ -46,6 +48,7 @@ const savePortfolio = async (data) => {
       flag: "w",
     });
   } catch (error) {
+    Sentry.captureException(error);
     throw `Error saving portfolio: ${error}`;
   }
 };
@@ -54,6 +57,7 @@ const getBinanceConfig = async () => {
   try {
     return JSON.parse(await readFile("exchange-config.json"));
   } catch (error) {
+    Sentry.captureException(error);
     throw `Error getting exchange config: ${error}`;
   }
 };

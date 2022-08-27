@@ -2,6 +2,7 @@ const { binance } = require("../binance");
 const { FIATS } = require("../constants");
 const { writeFile } = require("fs").promises;
 const { returnTimeLog } = require("./helpers");
+const Sentry = require("@sentry/node");
 
 const formatExchangeConfig = (data) => {
   let minimums = {};
@@ -56,5 +57,6 @@ module.exports = (async () => {
     console.log(
       `${returnTimeLog()} Error in getting exchange config: ${error}`
     );
+    Sentry.captureException(error);
   }
 })();

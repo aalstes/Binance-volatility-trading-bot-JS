@@ -1,3 +1,4 @@
+const Sentry = require("@sentry/node");
 const https = require("https");
 const { ccxtBinance } = require("./binance");
 require("./functions/getExchangeConfig");
@@ -14,11 +15,20 @@ const { SAFE_MODE, TRAILING_MODE } = require("./constants");
 
 const app = https.createServer();
 
-const { INTERVAL, SCAN_INTERVAL } = process.env;
+const { INTERVAL, SCAN_INTERVAL, SENTRY_DSN } = process.env;
 const intervalInMs = INTERVAL * 60000;
 const scanIntervalInMs = SCAN_INTERVAL * 60000;
 
 let latestPrices;
+
+Sentry.init({
+  dsn: SENTRY_DSN,
+
+  // Set tracesSampleRate to 1.0 to capture 100%
+  // of transactions for performance monitoring.
+  // We recommend adjusting this value in production
+  tracesSampleRate: 1.0,
+});
 
 const main = async () => {
   try {
@@ -46,6 +56,7 @@ const main = async () => {
         error || JSON.stringify(error)
       }`
     );
+    Sentry.captureException(error);
   }
 };
 

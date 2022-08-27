@@ -1,6 +1,7 @@
 const { FIATS } = require("../constants");
 const { binance } = require("../binance");
 const { returnTimeLog } = require("./helpers");
+const Sentry = require("@sentry/node");
 
 const getPrices = async () => {
   try {
@@ -25,6 +26,7 @@ const getPrices = async () => {
         error.body || JSON.stringify(error)
       }`
     );
+    Sentry.captureException(error);
   }
 };
 

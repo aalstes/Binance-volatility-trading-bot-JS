@@ -1,6 +1,6 @@
-const { readPortfolio, returnTimeLog, getBinanceConfig } = require('./helpers');
-const { sell, handleSellData } = require('./sell');
-const getPrices = require('./getPrices');
+const { readPortfolio, returnTimeLog, getBinanceConfig } = require("./helpers");
+const { sell, handleSellData } = require("./sell");
+const getPrices = require("./getPrices");
 
 const safeScan = async () => {
   try {
@@ -18,6 +18,7 @@ const safeScan = async () => {
     }
   } catch (error) {
     console.log(`${returnTimeLog()} Error in scanning ${error}`);
+    Sentry.captureException(error);
   }
 };
 
@@ -37,6 +38,7 @@ const sellAssetIfHitSL = async (asset, lastestAssetPrice) => {
       );
     }
   } catch (error) {
+    Sentry.captureException(error);
     throw `Error in selling asset when it hits SL threshold:  ${error}`;
   }
 };
@@ -47,6 +49,7 @@ const getAssetPrice = async (symbol) => {
     const assetPrice = lastestPrice[symbol].price;
     return assetPrice;
   } catch (error) {
+    Sentry.captureException(error);
     throw `Error in getting asset price: ${error}`;
   }
 };
