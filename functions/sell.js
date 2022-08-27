@@ -187,12 +187,13 @@ const handleLimitOrderSell = async () => {
         const slFilled = slOrder.status === "closed";
         console.log(`${cxtSymbol} SL order status`, slOrder.status);
         const ticker = tickers.find((t) => t.symbol === symbol);
+        console.log("last price", ticker.last);
         const tpReached = ticker.last >= TP_Threshold;
 
         let price;
         if (slFilled || tpReached) {
           if (slFilled) {
-            price = tpOrder.price;
+            price = slOrder.price;
             console.log("Stop LOSS, price: ", price);
           } else {
             const sellData = await sell(exchangeConfig, order);
