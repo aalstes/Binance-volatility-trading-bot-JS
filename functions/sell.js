@@ -186,7 +186,7 @@ const handleLimitOrderSell = async () => {
         const slOrder = await ccxtBinance.fetchOrder(SL_Order, cxtSymbol);
         const slFilled = slOrder.status === "closed";
         console.log(`${cxtSymbol} SL order status`, slOrder.status);
-        const ticker = tickers.find((t) => t.symbol === symbol);
+        const ticker = tickers[cxtSymbol];
         console.log("last price", ticker.last);
         const tpReached = ticker.last >= TP_Threshold;
 
