@@ -88,7 +88,7 @@ async function placeLimitOrder(market, type, amount, price) {
   const roundedAmount = ccxtBinance.amountToPrecision(market, amount);
   const params = {};
 
-  await ccxtBinance
+  return ccxtBinance
     .createOrder(market, "limit", type, roundedAmount, roundedPrice, params)
     .catch((error) => {
       console.log(`Error when placing ${type} order on ${market}`);
