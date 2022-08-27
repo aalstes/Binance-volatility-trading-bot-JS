@@ -57,7 +57,10 @@ const calculateBuyingQuantity = async (symbol, length, portfolio) => {
     /* Generally the bot will not spend 100% (only like 98-99%) of the budget because the the actual quantity is rounded down
      Do not buy if current portolio value is greater than 90% of the orignal quantity */
     if (currentPortfolioValue >= returnPercentageOfX(QUANTITY, 90)) {
-      throw `Current portfolio value exceeds the initial quantity, waiting for the current asset(s) to be sold first...`;
+      console.log(
+        "Current portfolio value exceeds the initial quantity, waiting for the current asset(s) to be sold first..."
+      );
+      return -1;
     }
 
     /* 
@@ -90,6 +93,9 @@ const handleBuy = async (volatiles) => {
           volatiles.length,
           portfolio
         );
+        if (quantity === -1) {
+          return;
+        }
         const purchaseData = await buy(symbol, quantity);
         console.log("purchaseData", purchaseData);
         const { price } = purchaseData.fills[0];
