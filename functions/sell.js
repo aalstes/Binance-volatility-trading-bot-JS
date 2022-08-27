@@ -179,8 +179,15 @@ const handleLimitOrderSell = async () => {
         console.log(`${symbol} TP order status`, tpOrder.status);
         console.log(`${symbol} SL order status`, slOrder.status);
 
+        let price;
         if (slFilled || tpFilled) {
-          const price = slFilled ? slOrder.price : tpOrder.price;
+          if (tpFilled) {
+            price = tpOrder.price;
+            console.log("Took PROFIT, price: ", price);
+          } else {
+            price = slOrder.price;
+            console.log("Stop LOSS, price: ", price);
+          }
           await handleSellData({ status: "FILLED" }, price, order);
         } else {
           console.log(
