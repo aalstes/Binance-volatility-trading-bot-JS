@@ -110,7 +110,6 @@ const handleBuy = async (volatiles) => {
           return;
         }
         const purchaseData = await buy(symbol, quantity);
-        console.log("purchaseData", purchaseData);
         const { price } = purchaseData.fills[0];
 
         const orderData = {
@@ -128,13 +127,13 @@ const handleBuy = async (volatiles) => {
         };
 
         const ccxtSymbol = toCcxtSymbol(symbol);
-        const sl_order = placeLimitOrder(
+        const sl_order = await placeLimitOrder(
           ccxtSymbol,
           "sell",
           quantity,
           orderData.SL_Threshold
         );
-        const tp_order = placeLimitOrder(
+        const tp_order = await placeLimitOrder(
           ccxtSymbol,
           "sell",
           quantity,
@@ -148,7 +147,7 @@ const handleBuy = async (volatiles) => {
 
         portfolio.push(orderData);
         console.log(
-          `${returnTimeLog()} Successfully placed an order: ${JSON.stringify(
+          `${returnTimeLog()} Successfully placed buy and limit sell orders: ${JSON.stringify(
             orderData
           )}`
         );
