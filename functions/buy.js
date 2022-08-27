@@ -122,7 +122,7 @@ const handleBuy = async (volatiles) => {
           ),
           stopPrice: ccxtBinance.priceToPrecision(
             ccxtSymbol,
-            orderData.SL_Threshold * 1.01 // to ensure it executes
+            orderData.SL_Threshold * 1.001 // to ensure it executes
           ),
           stopLimitPrice: ccxtBinance.priceToPrecision(
             ccxtSymbol,
