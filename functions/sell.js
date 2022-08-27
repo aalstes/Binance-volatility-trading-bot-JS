@@ -177,27 +177,29 @@ const handleSell = async (lastestPrice) => {
 const handleLimitOrderSell = async () => {
   const orders = await readPortfolio();
   if (orders.length) {
+    const symbols = orders.map((order) => toCcxtSymbol(order.symbol));
+    const tickers = await ccxtBinance.fetchTickers(symbols);
     orders.forEach(async (order) => {
       try {
-        const { symbol, SL_Order, TP_Order } = order;
+        const { symbol, SL_Order, TP_Threshold } = order;
         const cxtSymbol = toCcxtSymbol(symbol);
         const slOrder = await ccxtBinance.fetchOrder(SL_Order, cxtSymbol);
-        const tpOrder = await ccxtBinance.fetchOrder(TP_Order, cxtSymbol);
         const slFilled = slOrder.status === "closed";
-        const tpFilled = tpOrder.status === "closed";
-        console.log(`${cxtSymbol} TP order status`, tpOrder.status);
         console.log(`${cxtSymbol} SL order status`, slOrder.status);
+        const ticker = tickers.find((t) => t.symbol === symbol);
+        const tpReached = ticker.last >= TP_Threshold;
 
         let price;
-        if (slFilled || tpFilled) {
-          if (tpFilled) {
+        if (slFilled || tpReached) {
+          if (slFilled) {
             price = tpOrder.price;
-            console.log("Took PROFIT, price: ", price);
-            await ccxtBinance.cancelOrder(SL_Order, cxtSymbol);
-          } else {
-            price = slOrder.price;
             console.log("Stop LOSS, price: ", price);
-            await ccxtBinance.cancelOrder(TP_Order, cxtSymbol);
+          } else {
+            const sellData = await sell(exchangeConfig, order);
+            console.log("sellData", sellData);
+            await ccxtBinance.cancelOrder(SL_Order, cxtSymbol);
+            price = sellData.price;
+            console.log("Took PROFIT, price: ", price);
           }
           await handleSellData({ status: "FILLED" }, price, order);
         } else {

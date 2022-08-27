@@ -133,16 +133,8 @@ const handleBuy = async (volatiles) => {
           quantity,
           orderData.SL_Threshold
         );
-        const tp_order = await placeLimitOrder(
-          ccxtSymbol,
-          "sell",
-          quantity,
-          orderData.TP_Threshold
-        );
 
         orderData.SL_Order = sl_order.id;
-        orderData.TP_Order = tp_order.id;
-
         console.log("orderData", orderData);
 
         portfolio.push(orderData);
