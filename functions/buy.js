@@ -83,6 +83,19 @@ const calculateBuyingQuantity = async (symbol, length, portfolio) => {
   }
 };
 
+async function placeLimitOrder(market, type, amount, price) {
+  const roundedPrice = ccxtBinance.costToPrecision(market, price);
+  const roundedAmount = ccxtBinance.amountToPrecision(market, amount);
+  const params = {};
+
+  await ccxtBinance
+    .createOrder(market, "limit", type, roundedAmount, roundedPrice, params)
+    .catch((error) => {
+      console.log(`Error when placing ${type} order on ${market}`);
+      Sentry.captureException(error);
+    });
+}
+
 const handleBuy = async (volatiles) => {
   if (volatiles.length) {
     for (const symbol of volatiles) {
@@ -115,47 +128,21 @@ const handleBuy = async (volatiles) => {
         };
 
         const ccxtSymbol = toCcxtSymbol(symbol);
-
-        // From https://github.com/ccxt/ccxt/issues/14595
-        const params = {
-          symbol, // binance.market(symbol)['id'],
-          side: "SELL",
-          quantity: ccxtBinance.amountToPrecision(ccxtSymbol, quantity),
-          price: ccxtBinance.priceToPrecision(
-            ccxtSymbol,
-            orderData.TP_Threshold
-          ),
-          stopPrice: ccxtBinance.priceToPrecision(
-            ccxtSymbol,
-            orderData.SL_Threshold * 1.001 // to ensure it executes
-          ),
-          stopLimitPrice: ccxtBinance.priceToPrecision(
-            ccxtSymbol,
-            orderData.SL_Threshold
-          ),
-          stopLimitTimeInForce: "GTC",
-        };
-        // it’s recommended that the stop price for sell orders should be slightly higher than the limit price
-        // https://www.binance.com/en/support/faq/115003372072
-        console.log("params", params);
-
-        const oco_orders = await ccxtBinance.private_post_order_oco(params);
-        const orders = oco_orders.orderReports.map((item) =>
-          ccxtBinance.parseOrder(item)
+        const sl_order = placeLimitOrder(
+          ccxtSymbol,
+          "sell",
+          quantity,
+          orderData.SL_Threshold
         );
-        const stopOrder = orders.find(
-          (item) => item.info.type === "STOP_LOSS_LIMIT"
-        );
-        const limitOrder = orders.find(
-          (item) => item.info.type === "LIMIT_MAKER"
+        const tp_order = placeLimitOrder(
+          ccxtSymbol,
+          "sell",
+          quantity,
+          orderData.TP_Threshold
         );
 
-        console.log("limitOrder price", limitOrder.price);
-        console.log("stopOrder price", stopOrder.price);
-        console.log("stopOrder stop price", stopOrder.stopPrice);
-
-        orderData.SL_Order = stopOrder.id;
-        orderData.TP_Order = limitOrder.id;
+        orderData.SL_Order = sl_order.id;
+        orderData.TP_Order = tp_order.id;
 
         console.log("orderData", orderData);
 

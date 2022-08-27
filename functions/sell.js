@@ -193,9 +193,11 @@ const handleLimitOrderSell = async () => {
           if (tpFilled) {
             price = tpOrder.price;
             console.log("Took PROFIT, price: ", price);
+            await ccxtBinance.cancelOrder(SL_Order, cxtSymbol);
           } else {
             price = slOrder.price;
             console.log("Stop LOSS, price: ", price);
+            await ccxtBinance.cancelOrder(TP_Order, cxtSymbol);
           }
           await handleSellData({ status: "FILLED" }, price, order);
         } else {
