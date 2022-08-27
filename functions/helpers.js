@@ -1,4 +1,4 @@
-const { readFile, writeFile } = require('fs').promises;
+const { readFile, writeFile } = require("fs").promises;
 
 const returnPercentageOfX = (x, percentage) => {
   return (percentage * x) / 100;
@@ -15,7 +15,9 @@ const detectVolatiles = (initialPrices, lastestPrices) => {
   const volatiles = [];
   for (const coin in initialPrices) {
     const changePercentage =
-      ((lastestPrices[coin]['price'] - initialPrices[coin]['price']) / initialPrices[coin]['price']) * 100;
+      ((lastestPrices[coin]["price"] - initialPrices[coin]["price"]) /
+        initialPrices[coin]["price"]) *
+      100;
     if (changePercentage >= process.env.VOLATILE_TRIGGER) {
       const formatedChange = Number(changePercentage).toFixed(2);
       console.log(
@@ -32,7 +34,7 @@ const returnTimeLog = () => `[${new Date().toLocaleString()}] `;
 
 const readPortfolio = async () => {
   try {
-    return JSON.parse(await readFile('holding-assets.json'));
+    return JSON.parse(await readFile("holding-assets.json"));
   } catch (error) {
     throw `Error reading portfolio: ${error}`;
   }
@@ -40,7 +42,9 @@ const readPortfolio = async () => {
 
 const savePortfolio = async (data) => {
   try {
-    await writeFile('holding-assets.json', JSON.stringify(data, null, 4), { flag: 'w' });
+    await writeFile("holding-assets.json", JSON.stringify(data, null, 4), {
+      flag: "w",
+    });
   } catch (error) {
     throw `Error saving portfolio: ${error}`;
   }
@@ -48,10 +52,15 @@ const savePortfolio = async (data) => {
 
 const getBinanceConfig = async () => {
   try {
-    return JSON.parse(await readFile('exchange-config.json'));
+    return JSON.parse(await readFile("exchange-config.json"));
   } catch (error) {
     throw `Error getting exchange config: ${error}`;
   }
+};
+
+const toCcxtSymbol = (symbol) => {
+  const quoteCurrency = process.env.PAIR_WITH;
+  return symbol.replace(quoteCurrency, `/${quoteCurrency}`);
 };
 
 module.exports = {
@@ -62,4 +71,5 @@ module.exports = {
   returnTimeLog,
   readPortfolio,
   savePortfolio,
+  toCcxtSymbol,
 };

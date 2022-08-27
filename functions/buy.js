@@ -6,6 +6,7 @@ const {
   readPortfolio,
   savePortfolio,
   getBinanceConfig,
+  toCcxtSymbol,
 } = require("./helpers");
 
 const {
@@ -74,11 +75,6 @@ const calculateBuyingQuantity = async (symbol, length, portfolio) => {
   } catch (error) {
     throw `Error in calculating quantity: ${JSON.stringify(error)}`;
   }
-};
-
-const toCcxtSymbol = (symbol) => {
-  const quoteCurrency = process.env.PAIR_WITH;
-  return symbol.replace(quoteCurrency, `/${quoteCurrency}`);
 };
 
 const handleBuy = async (volatiles) => {

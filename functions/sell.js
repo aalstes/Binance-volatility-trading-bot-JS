@@ -6,6 +6,7 @@ const {
   savePortfolio,
   readPortfolio,
   getBinanceConfig,
+  toCcxtSymbol,
 } = require("./helpers");
 
 const { MARKET_FLAG, TRAILING_MODE, TEST_MODE } = require("../constants");
@@ -172,12 +173,13 @@ const handleLimitOrderSell = async () => {
     orders.forEach(async (order) => {
       try {
         const { symbol, SL_Order, TP_Order } = order;
-        const slOrder = await ccxtBinance.fetchOrder(SL_Order);
-        const tpOrder = await ccxtBinance.fetchOrder(TP_Order);
+        const cxtSymbol = toCcxtSymbol(symbol);
+        const slOrder = await ccxtBinance.fetchOrder(SL_Order, cxtSymbol);
+        const tpOrder = await ccxtBinance.fetchOrder(TP_Order, cxtSymbol);
         const slFilled = slOrder.status === "closed";
         const tpFilled = tpOrder.status === "closed";
-        console.log(`${symbol} TP order status`, tpOrder.status);
-        console.log(`${symbol} SL order status`, slOrder.status);
+        console.log(`${cxtSymbol} TP order status`, tpOrder.status);
+        console.log(`${cxtSymbol} SL order status`, slOrder.status);
 
         let price;
         if (slFilled || tpFilled) {
@@ -191,7 +193,7 @@ const handleLimitOrderSell = async () => {
           await handleSellData({ status: "FILLED" }, price, order);
         } else {
           console.log(
-            `${returnTimeLog()} ${symbol} price hasn't hit SL or TP threshold, continue to wait...`
+            `${returnTimeLog()} ${cxtSymbol} price hasn't hit SL or TP threshold, continue to wait...`
           );
         }
       } catch (error) {
