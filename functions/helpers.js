@@ -67,6 +67,29 @@ const toCcxtSymbol = (symbol) => {
   return symbol.replace(quoteCurrency, `/${quoteCurrency}`);
 };
 
+function checkMinimumQuantity(exchange, market, totalAmount, originalRate) {
+  const ccxtMarket = exchange.markets[market];
+
+  if (!ccxtMarket) {
+    return false;
+  }
+
+  const { amount, cost } = ccxtMarket.limits;
+  const realAmount = exchange.amountToPrecision(market, totalAmount);
+  const realOriginalRate = exchange.priceToPrecision(market, originalRate);
+  const realCosts = realAmount * realOriginalRate;
+
+  if (cost?.min && cost.min > 0 && realCosts < cost.min) {
+    return false;
+  }
+
+  if (amount?.min && amount.min > 0 && realAmount < amount.min) {
+    return false;
+  }
+
+  return true;
+}
+
 module.exports = {
   returnPercentageOfX,
   sleep,
@@ -76,4 +99,5 @@ module.exports = {
   readPortfolio,
   savePortfolio,
   toCcxtSymbol,
+  checkMinimumQuantity,
 };

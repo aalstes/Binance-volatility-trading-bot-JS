@@ -8,6 +8,7 @@ const {
   savePortfolio,
   getBinanceConfig,
   toCcxtSymbol,
+  checkMinimumQuantity,
 } = require("./helpers");
 
 const {
@@ -45,7 +46,7 @@ const buy = async (coin, quantity) => {
   }
 };
 
-const calculateBuyingQuantity = async (symbol, length, portfolio) => {
+const calculateBuyingQuantity = async (symbol, length, portfolio, price) => {
   try {
     const exchangeConfig = await getBinanceConfig();
     const { stepSize } = exchangeConfig[symbol];
@@ -73,8 +74,7 @@ const calculateBuyingQuantity = async (symbol, length, portfolio) => {
       allowedAmountToSpend = MIN_QUANTITY;
     }
 
-    const price = await binance.prices(symbol);
-    const quantity = allowedAmountToSpend / price[symbol];
+    const quantity = allowedAmountToSpend / price;
     const quantityBasedOnStepSize = await binance.roundStep(quantity, stepSize);
     return quantityBasedOnStepSize;
   } catch (error) {
@@ -96,19 +96,40 @@ async function placeLimitOrder(market, type, amount, price) {
     });
 }
 
-const handleBuy = async (volatiles) => {
+const handleBuy = async (volatiles, latestPrices) => {
   if (volatiles.length) {
     for (const symbol of volatiles) {
       try {
+        const ccxtSymbol = toCcxtSymbol(symbol);
+
+        // TODO: check if last 1m candle is green.
+        // const OHLCV = await ccxtBinance.fetchOHLCV(ccxtSymbol, "1m");
+
+        const latestPrice = latestPrices[symbol]["price"];
         const portfolio = await readPortfolio();
         const quantity = await calculateBuyingQuantity(
           symbol,
           volatiles.length,
-          portfolio
+          portfolio,
+          latestPrice
         );
         if (quantity === -1) {
           return;
         }
+
+        const SL_price =
+          latestPrice - returnPercentageOfX(latestPrice, SL_THRESHOLD);
+
+        // Check that SL order qty/cost is not too small.
+        if (
+          !checkMinimumQuantity(ccxtBinance, ccxtSymbol, quantity, SL_price)
+        ) {
+          console.log(
+            `SL order qty/cost is too small on ${ccxtSymbol}. Qty: ${quantity}, SL_price: ${SL_price} `
+          );
+          return;
+        }
+
         const purchaseData = await buy(symbol, quantity);
         const { price } = purchaseData.fills[0];
 
@@ -119,19 +140,17 @@ const handleBuy = async (volatiles) => {
           bought_at: Number(price),
           TP_Threshold:
             Number(price) + returnPercentageOfX(Number(price), TP_THRESHOLD),
-          SL_Threshold:
-            Number(price) - returnPercentageOfX(Number(price), SL_THRESHOLD),
+          SL_Threshold: SL_price,
           purchase_time: new Date().toLocaleString(),
           purchase_time_unix: new Date().getTime(),
           updated_at: new Date().toLocaleString(),
         };
 
-        const ccxtSymbol = toCcxtSymbol(symbol);
         const sl_order = await placeLimitOrder(
           ccxtSymbol,
           "sell",
           quantity,
-          orderData.SL_Threshold
+          SL_price
         );
 
         orderData.SL_Order = sl_order.id;

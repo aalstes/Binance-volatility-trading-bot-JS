@@ -49,7 +49,7 @@ const main = async () => {
     if (TRAILING_MODE) {
       await handleSell(latestPrices);
     }
-    await handleBuy(volatiles);
+    await handleBuy(volatiles, latestPrices);
   } catch (error) {
     console.log(
       `${returnTimeLog()} Error in excuting main function: ${
