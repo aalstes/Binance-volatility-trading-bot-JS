@@ -102,8 +102,26 @@ const handleBuy = async (volatiles, latestPrices) => {
       try {
         const ccxtSymbol = toCcxtSymbol(symbol);
 
-        // TODO: check if last 1m candle is green.
-        // const OHLCV = await ccxtBinance.fetchOHLCV(ccxtSymbol, "1m");
+        // Check if last 1m candle is green.
+        const OHLCV = await ccxtBinance.fetchOHLCV(
+          ccxtSymbol,
+          "1m",
+          undefined,
+          3
+        );
+        const lastOpen = OHLCV[0][1];
+        const lastClose = OHLCV[0][4];
+        const lastCandleIsGreen = lastClose > lastOpen;
+        console.log(
+          `${ccxtSymbol} last open is ${lastOpen} and last close is ${lastClose}.`
+        );
+
+        if (lastCandleIsGreen) {
+          console.log("Last candle is green. Proceeding to buy.");
+        } else {
+          console.log("Last candle is not green. Skipping.");
+          continue;
+        }
 
         const latestPrice = latestPrices[symbol]["price"];
         const portfolio = await readPortfolio();
@@ -127,7 +145,7 @@ const handleBuy = async (volatiles, latestPrices) => {
           console.log(
             `SL order qty/cost is too small on ${ccxtSymbol}. Qty: ${quantity}, SL_price: ${SL_price} `
           );
-          return;
+          continue;
         }
 
         const purchaseData = await buy(symbol, quantity);
