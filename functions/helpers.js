@@ -12,17 +12,19 @@ const removeDuplicates = (array) => {
   return [...new Set(array)];
 };
 
-const detectVolatiles = (initialPrices, lastestPrices) => {
+const detectVolatiles = (initialPrices, latestPrices) => {
   const volatiles = [];
   for (const coin in initialPrices) {
     const changePercentage =
-      ((lastestPrices[coin]["price"] - initialPrices[coin]["price"]) /
+      ((latestPrices[coin]["price"] - initialPrices[coin]["price"]) /
         initialPrices[coin]["price"]) *
       100;
     if (changePercentage >= process.env.VOLATILE_TRIGGER) {
       const formatedChange = Number(changePercentage).toFixed(2);
       console.log(
-        `${returnTimeLog()} The price of ${coin} has increased ${formatedChange}% 
+        `${returnTimeLog()} The price of ${coin} has increased ${formatedChange}% to ${
+          latestPrices[coin]["price"]
+        }
         within last ${process.env.INTERVAL} minutes...`
       );
       volatiles.push(coin);
