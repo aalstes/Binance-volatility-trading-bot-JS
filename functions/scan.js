@@ -1,6 +1,7 @@
 const { readPortfolio, returnTimeLog, getBinanceConfig } = require("./helpers");
 const { sell, handleSellData } = require("./sell");
 const getPrices = require("./getPrices");
+const Sentry = require("@sentry/node");
 
 const safeScan = async () => {
   try {
