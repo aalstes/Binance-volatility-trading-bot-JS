@@ -37,7 +37,7 @@ const main = async () => {
     const initialPrices = await getPrices();
     const quoteCurrency = process.env.PAIR_WITH;
     while (
-      initialPrices[`BTC${quoteCurrency}}`].time >
+      initialPrices[`BTC${quoteCurrency}`].time >
       new Date().getTime() - intervalInMs
     ) {
       console.log(
