@@ -35,8 +35,9 @@ const main = async () => {
     await ccxtBinance.loadMarkets();
 
     const initialPrices = await getPrices();
+    const quoteCurrency = process.env.PAIR_WITH;
     while (
-      initialPrices["BTCUSDT"].time >
+      initialPrices[`BTC${quoteCurrency}}`].time >
       new Date().getTime() - intervalInMs
     ) {
       console.log(
