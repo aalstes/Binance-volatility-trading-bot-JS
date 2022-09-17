@@ -1,6 +1,6 @@
 const Sentry = require("@sentry/node");
 const { binance, ccxtBinance } = require("../binance");
-const { MARKET_FLAG } = require("../constants");
+const { MARKET_FLAG, TRAILING_MODE } = require("../constants");
 const {
   returnPercentageOfX,
   returnTimeLog,
@@ -164,14 +164,17 @@ const handleBuy = async (volatiles, latestPrices) => {
           updated_at: new Date().toLocaleString(),
         };
 
-        const sl_order = await placeLimitOrder(
-          ccxtSymbol,
-          "sell",
-          quantity,
-          SL_price
-        );
+        if (!TRAILING_MODE) {
+          const sl_order = await placeLimitOrder(
+            ccxtSymbol,
+            "sell",
+            quantity,
+            SL_price
+          );
 
-        orderData.SL_Order = sl_order.id;
+          orderData.SL_Order = sl_order.id;
+        }
+
         console.log("orderData", orderData);
 
         portfolio.push(orderData);
