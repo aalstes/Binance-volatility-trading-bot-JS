@@ -1,5 +1,6 @@
 const { readFile, writeFile } = require("fs").promises;
 const Sentry = require("@sentry/node");
+const { TP_ONLY_MODE } = require("../constants");
 
 const returnPercentageOfX = (x, percentage) => {
   return (percentage * x) / 100;
@@ -12,6 +13,13 @@ const removeDuplicates = (array) => {
   return [...new Set(array)];
 };
 
+function hasChangedEnough(changePercentage) {
+  if (TP_ONLY_MODE) {
+    return changePercentage <= -1 * Number(process.env.VOLATILE_TRIGGER);
+  }
+  return changePercentage >= Number(process.env.VOLATILE_TRIGGER);
+}
+
 const detectVolatiles = (initialPrices, latestPrices) => {
   const volatiles = [];
   for (const coin in initialPrices) {
@@ -19,10 +27,10 @@ const detectVolatiles = (initialPrices, latestPrices) => {
       ((latestPrices[coin]["price"] - initialPrices[coin]["price"]) /
         initialPrices[coin]["price"]) *
       100;
-    if (changePercentage >= process.env.VOLATILE_TRIGGER) {
-      const formatedChange = Number(changePercentage).toFixed(2);
+    if (hasChangedEnough(changePercentage)) {
+      const formattedChange = Number(changePercentage).toFixed(2);
       console.log(
-        `${returnTimeLog()} The price of ${coin} has increased ${formatedChange}% to ${
+        `${returnTimeLog()} The price of ${coin} has changed ${formattedChange}% to ${
           latestPrices[coin]["price"]
         }
         within last ${process.env.INTERVAL} minutes...`

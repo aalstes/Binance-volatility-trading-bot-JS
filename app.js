@@ -47,7 +47,7 @@ const main = async () => {
     }
     latestPrices = await getPrices();
     const volatiles = detectVolatiles(initialPrices, latestPrices);
-    // Now using trailing stop order.
+    // We want to use a trailing stop order.
     // if (TRAILING_MODE) {
     //   await handleSell(latestPrices);
     // }

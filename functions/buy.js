@@ -1,6 +1,6 @@
 const Sentry = require("@sentry/node");
 const { binance, ccxtBinance } = require("../binance");
-const { MARKET_FLAG, TRAILING_MODE } = require("../constants");
+const { MARKET_FLAG, TRAILING_MODE, TP_ONLY_MODE } = require("../constants");
 const {
   returnPercentageOfX,
   returnTimeLog,
@@ -83,23 +83,17 @@ const calculateBuyingQuantity = async (symbol, length, portfolio, price) => {
   }
 };
 
-async function placeStopLossOrder(market, type, amount, price, trailingdDelta) {
+async function placeLimitOrder(market, type, amount, price, trailingdDelta) {
   const roundedPrice = ccxtBinance.costToPrecision(market, price);
   const roundedAmount = ccxtBinance.amountToPrecision(market, amount);
   const params = {};
   if (trailingdDelta) {
+    // TODO: use this with stop loss order
     params.trailingdDelta = trailingdDelta;
   }
 
   return ccxtBinance
-    .createOrder(
-      market,
-      "STOP_LOSS_LIMIT",
-      type,
-      roundedAmount,
-      roundedPrice,
-      params
-    )
+    .createOrder(market, "LIMIT", type, roundedAmount, roundedPrice, params)
     .catch((error) => {
       console.log(`Error when placing ${type} order on ${market}`);
       Sentry.captureException(error);
@@ -174,15 +168,28 @@ const handleBuy = async (volatiles, latestPrices) => {
           updated_at: new Date().toLocaleString(),
         };
 
-        const sl_order = await placeStopLossOrder(
-          ccxtSymbol,
-          "sell",
-          quantity,
-          SL_price,
-          TRAILING_MODE ? Number(SL_THRESHOLD) * 100 : undefined
-        );
+        if (!TP_ONLY_MODE) {
+          const sl_order = await placeLimitOrder(
+            ccxtSymbol,
+            "sell",
+            quantity,
+            SL_price,
+            TRAILING_MODE ? Number(SL_THRESHOLD) * 100 : undefined
+          );
 
-        orderData.SL_Order = sl_order.id;
+          orderData.SL_Order = sl_order.id;
+        } else {
+          const TP_price =
+            latestPrice + returnPercentageOfX(latestPrice, TP_THRESHOLD);
+          const tp_order = await placeLimitOrder(
+            ccxtSymbol,
+            "sell",
+            quantity,
+            TP_price
+          );
+
+          orderData.SL_Order = tp_order.id;
+        }
 
         console.log("orderData", orderData);
 
