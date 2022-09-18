@@ -83,7 +83,7 @@ const calculateBuyingQuantity = async (symbol, length, portfolio, price) => {
   }
 };
 
-async function placeLimitOrder(market, type, amount, price, trailingdDelta) {
+async function placeStopLossOrder(market, type, amount, price, trailingdDelta) {
   const roundedPrice = ccxtBinance.costToPrecision(market, price);
   const roundedAmount = ccxtBinance.amountToPrecision(market, amount);
   const params = {};
@@ -92,7 +92,14 @@ async function placeLimitOrder(market, type, amount, price, trailingdDelta) {
   }
 
   return ccxtBinance
-    .createOrder(market, "limit", type, roundedAmount, roundedPrice, params)
+    .createOrder(
+      market,
+      "STOP_LOSS_LIMIT",
+      type,
+      roundedAmount,
+      roundedPrice,
+      params
+    )
     .catch((error) => {
       console.log(`Error when placing ${type} order on ${market}`);
       Sentry.captureException(error);
@@ -167,7 +174,7 @@ const handleBuy = async (volatiles, latestPrices) => {
           updated_at: new Date().toLocaleString(),
         };
 
-        const sl_order = await placeLimitOrder(
+        const sl_order = await placeStopLossOrder(
           ccxtSymbol,
           "sell",
           quantity,
