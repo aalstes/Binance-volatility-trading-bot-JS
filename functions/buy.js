@@ -83,10 +83,13 @@ const calculateBuyingQuantity = async (symbol, length, portfolio, price) => {
   }
 };
 
-async function placeLimitOrder(market, type, amount, price) {
+async function placeLimitOrder(market, type, amount, price, trailingdDelta) {
   const roundedPrice = ccxtBinance.costToPrecision(market, price);
   const roundedAmount = ccxtBinance.amountToPrecision(market, amount);
   const params = {};
+  if (trailingdDelta) {
+    params.trailingdDelta = trailingdDelta;
+  }
 
   return ccxtBinance
     .createOrder(market, "limit", type, roundedAmount, roundedPrice, params)
@@ -164,16 +167,15 @@ const handleBuy = async (volatiles, latestPrices) => {
           updated_at: new Date().toLocaleString(),
         };
 
-        if (!TRAILING_MODE) {
-          const sl_order = await placeLimitOrder(
-            ccxtSymbol,
-            "sell",
-            quantity,
-            SL_price
-          );
+        const sl_order = await placeLimitOrder(
+          ccxtSymbol,
+          "sell",
+          quantity,
+          SL_price,
+          TRAILING_MODE ? Number(SL_THRESHOLD) * 100 : undefined
+        );
 
-          orderData.SL_Order = sl_order.id;
-        }
+        orderData.SL_Order = sl_order.id;
 
         console.log("orderData", orderData);
 

@@ -47,9 +47,10 @@ const main = async () => {
     }
     latestPrices = await getPrices();
     const volatiles = detectVolatiles(initialPrices, latestPrices);
-    if (TRAILING_MODE) {
-      await handleSell(latestPrices);
-    }
+    // Now using trailing stop order.
+    // if (TRAILING_MODE) {
+    //   await handleSell(latestPrices);
+    // }
     await handleBuy(volatiles, latestPrices);
   } catch (error) {
     console.log(
@@ -68,8 +69,6 @@ if (SAFE_MODE) {
   setInterval(safeScan, scanIntervalInMs);
 }
 
-if (!TRAILING_MODE) {
-  setInterval(handleLimitOrderSell, 10000);
-}
+setInterval(handleLimitOrderSell, 10000);
 
 module.exports = app;
