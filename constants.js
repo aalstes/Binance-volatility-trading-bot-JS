@@ -32,7 +32,7 @@ Disable this feature by setting "TRAILING_MODE" below to false
 */
 const TRAILING_MODE = process.env.TRAILING_MODE !== "false";
 
-const TP_ONLY_MODE = process.env.TP_ONLY_MODE !== "false";
+const BUY_DIPS_MODE = process.env.BUY_DIPS_MODE !== "false";
 
 /* 
   SAFE MODE description: To avoid the rapid ups and immediate downs within the next interval,
@@ -51,5 +51,5 @@ module.exports = {
   TEST_MODE,
   TRAILING_MODE,
   SAFE_MODE,
-  TP_ONLY_MODE,
+  BUY_DIPS_MODE,
 };

@@ -11,7 +11,7 @@ const {
   returnTimeLog,
 } = require("./functions/helpers");
 const safeScan = require("./functions/scan");
-const { SAFE_MODE, TRAILING_MODE } = require("./constants");
+const { SAFE_MODE, TRAILING_MODE, BUY_DIPS_MODE } = require("./constants");
 
 const app = https.createServer();
 
@@ -65,7 +65,7 @@ const main = async () => {
 main();
 setInterval(main, intervalInMs);
 
-if (SAFE_MODE) {
+if (SAFE_MODE && !BUY_DIPS_MODE) {
   setInterval(safeScan, scanIntervalInMs);
 }
 

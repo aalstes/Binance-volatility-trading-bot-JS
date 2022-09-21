@@ -1,6 +1,6 @@
 const { readFile, writeFile } = require("fs").promises;
 const Sentry = require("@sentry/node");
-const { TP_ONLY_MODE } = require("../constants");
+const { BUY_DIPS_MODE } = require("../constants");
 
 const returnPercentageOfX = (x, percentage) => {
   return (percentage * x) / 100;
@@ -14,7 +14,7 @@ const removeDuplicates = (array) => {
 };
 
 function hasChangedEnough(changePercentage) {
-  if (TP_ONLY_MODE) {
+  if (BUY_DIPS_MODE) {
     return changePercentage <= -1 * Number(process.env.VOLATILE_TRIGGER);
   }
   return changePercentage >= Number(process.env.VOLATILE_TRIGGER);

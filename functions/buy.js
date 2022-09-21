@@ -1,6 +1,6 @@
 const Sentry = require("@sentry/node");
 const { binance, ccxtBinance } = require("../binance");
-const { MARKET_FLAG, TRAILING_MODE, TP_ONLY_MODE } = require("../constants");
+const { MARKET_FLAG, TRAILING_MODE, BUY_DIPS_MODE } = require("../constants");
 const {
   returnPercentageOfX,
   returnTimeLog,
@@ -168,7 +168,7 @@ const handleBuy = async (volatiles, latestPrices) => {
           updated_at: new Date().toLocaleString(),
         };
 
-        if (!TP_ONLY_MODE) {
+        if (!BUY_DIPS_MODE) {
           const sl_order = await placeLimitOrder(
             ccxtSymbol,
             "sell",
@@ -180,7 +180,8 @@ const handleBuy = async (volatiles, latestPrices) => {
           orderData.SL_Order = sl_order.id;
         } else {
           const TP_price =
-            latestPrice + returnPercentageOfX(latestPrice, TP_THRESHOLD);
+            Number(latestPrice) +
+            returnPercentageOfX(Number(latestPrice), TP_THRESHOLD);
           const tp_order = await placeLimitOrder(
             ccxtSymbol,
             "sell",
@@ -211,7 +212,7 @@ const handleBuy = async (volatiles, latestPrices) => {
     }
   } else {
     console.log(
-      `${returnTimeLog()} No coin has risen more than ${VOLATILE_TRIGGER}% in the last ${INTERVAL} minutes`
+      `${returnTimeLog()} No coin has changed more than ${VOLATILE_TRIGGER}% in the last ${INTERVAL} minutes`
     );
   }
 };
