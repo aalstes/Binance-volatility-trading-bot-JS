@@ -18,6 +18,7 @@ const {
   MIN_QUANTITY,
   TP_THRESHOLD,
   SL_THRESHOLD,
+  MAX_EXPOSURE_PER_MARKET,
 } = process.env;
 
 const calculatePortfolioValue = (portfolio) => {
@@ -64,6 +65,10 @@ const calculateBuyingQuantity = async (symbol, length, portfolio, price) => {
       return -1;
     }
 
+    if (allowedAmountToSpend > Number(MAX_EXPOSURE_PER_MARKET)) {
+      allowedAmountToSpend = Number(MAX_EXPOSURE_PER_MARKET);
+    }
+
     /* 
       In case the allowed amount smaller than the min qty, proceed to buy the with the min qty
       For example in an interval, there are 4 coins to buy and the budget is 30...
@@ -105,6 +110,23 @@ const handleBuy = async (volatiles, latestPrices) => {
     for (const symbol of volatiles) {
       try {
         const ccxtSymbol = toCcxtSymbol(symbol);
+        const latestPrice = Number(latestPrices[symbol]["price"]);
+        console.log(`${ccxtSymbol} price`, latestPrice);
+
+        const since = Date.now() - 10 * 24 * 60 * 60 * 1000;
+        const oldOHLCV = await ccxtBinance.fetchOHLCV(
+          ccxtSymbol,
+          "1d",
+          since,
+          1
+        );
+        console.log(`${ccxtSymbol} price ${new Date(since)}`, oldOHLCV[0][4]);
+        if (!oldOHLCV[0][4] || oldOHLCV[0][4] > latestPrice * 1.5) {
+          console.log(
+            "Price 10 days ago is more than 50% higher than the latest price. Skipping."
+          );
+          continue;
+        }
 
         // Check if last 1m candle is green.
         const OHLCV = await ccxtBinance.fetchOHLCV(
@@ -127,7 +149,6 @@ const handleBuy = async (volatiles, latestPrices) => {
           continue;
         }
 
-        const latestPrice = latestPrices[symbol]["price"];
         const portfolio = await readPortfolio();
         const quantity = await calculateBuyingQuantity(
           symbol,
