@@ -202,7 +202,7 @@ const handleLimitOrderSell = async () => {
             const sellData = await sell(exchangeConfig, order);
             console.log("sellData", sellData);
             await ccxtBinance.cancelOrder(SL_Order, ccxtSymbol);
-            price = sellData.price;
+            const price = sellData.price;
             console.log(`${symbol} sold for ${price}`);
           }
           await handleSellData({ status: "CLOSED_OLD" }, price, order);
