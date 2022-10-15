@@ -8,7 +8,9 @@
 
 - Added Dockerfile. https://hub.docker.com/repository/docker/alsteant/binance-bot
 
-- TP and SL with limit sell orders.
+- BUY_DIPS_MODE.
+
+- Close old positions.
 
 ## TODO
 

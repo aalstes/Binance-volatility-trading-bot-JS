@@ -11,7 +11,7 @@ const {
 const Sentry = require("@sentry/node");
 
 const { MARKET_FLAG, TRAILING_MODE, TEST_MODE } = require("../constants");
-const { TP_THRESHOLD, SL_THRESHOLD } = process.env;
+const { TP_THRESHOLD, SL_THRESHOLD, CLOSE_POSITIONS_AFTER } = process.env;
 
 const sell = async (exchangeConfig, { symbol, quantity }) => {
   try {
@@ -182,13 +182,32 @@ const handleLimitOrderSell = async () => {
     orders.forEach(async (order) => {
       try {
         const { symbol, SL_Order, TP_Threshold } = order;
-        const cxtSymbol = toCcxtSymbol(symbol);
-        const slOrder = await ccxtBinance.fetchOrder(SL_Order, cxtSymbol);
+        const ccxtSymbol = toCcxtSymbol(symbol);
+        const slOrder = await ccxtBinance.fetchOrder(SL_Order, ccxtSymbol);
         const slFilled = slOrder.status === "closed";
-        console.log(`${cxtSymbol} SL order status`, slOrder.status);
-        const ticker = tickers[cxtSymbol];
+        console.log(`${ccxtSymbol} SL order status`, slOrder.status);
+        const ticker = tickers[ccxtSymbol];
         console.log("last price", ticker.last);
         const tpReached = ticker.last >= TP_Threshold;
+        const closeAfterMinutes = Number(CLOSE_POSITIONS_AFTER);
+
+        if (closeAfterMinutes > 0) {
+          // Close "old" positions that didn't make the profit fast enough
+          // to free up capital to take hopefully better positions
+          const boughtAt = Number(order.purchase_time_unix);
+          const isOld =
+            boughtAt < new Date().getTime() - closeAfterMinutes * 60 * 1000;
+          if (isOld) {
+            console.log(`${symbol} position is too old, closing.`);
+            const sellData = await sell(exchangeConfig, order);
+            console.log("sellData", sellData);
+            await ccxtBinance.cancelOrder(SL_Order, ccxtSymbol);
+            price = sellData.price;
+            console.log(`${symbol} sold for ${price}`);
+          }
+          await handleSellData({ status: "CLOSED_OLD" }, price, order);
+          return;
+        }
 
         let price;
         if (slFilled || tpReached) {
