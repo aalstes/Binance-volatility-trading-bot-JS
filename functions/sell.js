@@ -176,6 +176,8 @@ const handleSell = async (lastestPrice) => {
 
 const handleLimitOrderSell = async () => {
   const orders = await readPortfolio();
+  const exchangeConfig = await getBinanceConfig();
+
   if (orders.length) {
     const symbols = orders.map((order) => toCcxtSymbol(order.symbol));
     const tickers = await ccxtBinance.fetchTickers(symbols);
@@ -198,15 +200,28 @@ const handleLimitOrderSell = async () => {
           const isOld =
             boughtAt < new Date().getTime() - closeAfterMinutes * 60 * 1000;
           if (isOld) {
-            console.log(`${symbol} position is too old, closing.`);
+            console.log(
+              `${symbol} position from ${new Date(
+                boughtAt
+              ).toLocaleString()} is too old, closing.`
+            );
             const sellData = await sell(exchangeConfig, order);
             console.log("sellData", sellData);
-            await ccxtBinance.cancelOrder(SL_Order, ccxtSymbol);
-            const price = sellData.price;
-            console.log(`${symbol} sold for ${price}`);
+            console.log(`${symbol} sold for ${sellData.price}`);
+            await handleSellData(
+              { status: "CLOSED_OLD" },
+              sellData.price,
+              order
+            );
+            try {
+              await ccxtBinance.cancelOrder(SL_Order, ccxtSymbol);
+            } catch (error) {
+              console.log(
+                `Cancelling ${ccxtSymbol} limit order ${ccxtSymbol} failed with ${error.message}`
+              );
+            }
+            return;
           }
-          await handleSellData({ status: "CLOSED_OLD" }, price, order);
-          return;
         }
 
         let price;
@@ -217,14 +232,14 @@ const handleLimitOrderSell = async () => {
           } else {
             const sellData = await sell(exchangeConfig, order);
             console.log("sellData", sellData);
-            await ccxtBinance.cancelOrder(SL_Order, cxtSymbol);
             price = sellData.price;
             console.log("Took PROFIT, price: ", price);
+            await ccxtBinance.cancelOrder(SL_Order, ccxtSymbol);
           }
           await handleSellData({ status: "FILLED" }, price, order);
         } else {
           console.log(
-            `${returnTimeLog()} ${cxtSymbol} price hasn't hit SL or TP threshold, continue to wait...`
+            `${returnTimeLog()} ${ccxtSymbol} price hasn't hit SL or TP threshold, continue to wait...`
           );
         }
       } catch (error) {
