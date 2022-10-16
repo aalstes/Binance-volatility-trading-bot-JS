@@ -214,6 +214,7 @@ const handleLimitOrderSell = async () => {
               order
             );
             try {
+              console.log(`Cancelling ${ccxtSymbol} limit order ${SL_Order}`);
               await ccxtBinance.cancelOrder(SL_Order, ccxtSymbol);
             } catch (error) {
               console.log(
