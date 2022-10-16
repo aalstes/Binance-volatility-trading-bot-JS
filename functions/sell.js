@@ -205,6 +205,8 @@ const handleLimitOrderSell = async () => {
                 boughtAt
               ).toLocaleString()} is too old, closing.`
             );
+            console.log(`Cancelling ${ccxtSymbol} limit order ${SL_Order}`);
+            await ccxtBinance.cancelOrder(SL_Order, ccxtSymbol);
             const sellData = await sell(exchangeConfig, order);
             console.log("sellData", sellData);
             console.log(`${symbol} sold for ${sellData.price}`);
@@ -213,14 +215,6 @@ const handleLimitOrderSell = async () => {
               sellData.price,
               order
             );
-            try {
-              console.log(`Cancelling ${ccxtSymbol} limit order ${SL_Order}`);
-              await ccxtBinance.cancelOrder(SL_Order, ccxtSymbol);
-            } catch (error) {
-              console.log(
-                `Cancelling ${ccxtSymbol} limit order ${ccxtSymbol} failed with ${error.message}`
-              );
-            }
             return;
           }
         }
@@ -231,11 +225,11 @@ const handleLimitOrderSell = async () => {
             price = slOrder.price;
             console.log("Stop LOSS, price: ", price);
           } else {
+            await ccxtBinance.cancelOrder(SL_Order, ccxtSymbol);
             const sellData = await sell(exchangeConfig, order);
             console.log("sellData", sellData);
             price = sellData.price;
             console.log("Took PROFIT, price: ", price);
-            await ccxtBinance.cancelOrder(SL_Order, ccxtSymbol);
           }
           await handleSellData({ status: "FILLED" }, price, order);
         } else {
