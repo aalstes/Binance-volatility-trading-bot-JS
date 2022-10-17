@@ -206,7 +206,16 @@ const handleLimitOrderSell = async () => {
               ).toLocaleString()} is too old, closing.`
             );
             console.log(`Cancelling ${ccxtSymbol} limit order ${SL_Order}`);
-            await ccxtBinance.cancelOrder(SL_Order, ccxtSymbol);
+            try {
+              await ccxtBinance.cancelOrder(SL_Order, ccxtSymbol);
+            } catch (error) {
+              Sentry.captureException(error);
+              console.log(
+                `${returnTimeLog()} Error when cancelling order: ${JSON.stringify(
+                  error
+                )}`
+              );
+            }
             const sellData = await sell(exchangeConfig, order);
             console.log("sellData", sellData);
             console.log(`${symbol} sold for ${sellData.price}`);
